@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1db954">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Melomanía</title>
@@ -430,6 +432,11 @@ function terminarJuego(){
     podio += `<div><strong>${medalla}</strong> ${j.nombre} → ${j.puntos} pts</div>`;
   });
   document.getElementById("podio").innerHTML = podio;
+}
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
 }
 </script>
 </body>
