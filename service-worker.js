@@ -1,12 +1,14 @@
-const CACHE = "melomania-cache-v2";
+const CACHE = "quetema-cache-v4";
+
 const FILES = [
   "./",
   "./index.html",
-  "./cartas.js",
-  "./manifest.webmanifest"
+  "./preguntas.js",
+  "./manifest.json",
+  "./logo.png"
 ];
 
-// INSTALACIÓN
+// INSTALACIÓN: Cachea los archivos base
 self.addEventListener("install", evt => {
   evt.waitUntil(
     caches.open(CACHE).then(cache => cache.addAll(FILES))
@@ -14,36 +16,35 @@ self.addEventListener("install", evt => {
   self.skipWaiting();
 });
 
-// ACTIVACIÓN
+// ACTIVACIÓN: Limpia cachés viejos
 self.addEventListener("activate", evt => {
   evt.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(k => (k !== CACHE ? caches.delete(k) : null)))
+      Promise.all(
+        keys
+          .filter(k => k !== CACHE)
+          .map(k => caches.delete(k))
+      )
     )
   );
-  clients.claim();
+  self.clients.claim();
 });
 
-// FETCH dinámico
+// FETCH: Stale-While-Revalidate (rápido + mantiene actualizado)
 self.addEventListener("fetch", evt => {
-  const url = evt.request.url;
-
-  // 👉 NETWORK FIRST para preguntas
-  if (url.endsWith("preguntas.json") || url.endsWith("cartas.js")) {
-    evt.respondWith(
-      fetch(evt.request)
-        .then(res => {
-          // guarda nueva versión
-          caches.open(CACHE).then(cache => cache.put(evt.request, res.clone()));
-          return res;
-        })
-        .catch(() => caches.match(evt.request)) // offline fallback
-    );
-    return;
-  }
-
-  // 👉 CACHE FIRST para todo lo demás
   evt.respondWith(
-    caches.match(evt.request).then(r => r || fetch(evt.request))
+    caches.match(evt.request).then(cacheRes => {
+      const fetchPromise = fetch(evt.request)
+        .then(networkRes => {
+          // actualizar caché con la respuesta nueva
+          return caches.open(CACHE).then(cache => {
+            cache.put(evt.request, networkRes.clone());
+            return networkRes;
+          });
+        })
+        .catch(() => cacheRes); // offline fallback
+
+      return cacheRes || fetchPromise;
+    })
   );
 });
