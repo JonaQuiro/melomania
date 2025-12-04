@@ -1,5 +1,5 @@
 // Cambiá la versión cuando quieras forzar actualización
-const CACHE = "melomania-v4";
+const CACHE = "melomania-v5";
 
 const FILES = [
   "./",
